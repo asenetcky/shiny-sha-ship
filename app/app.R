@@ -1,6 +1,7 @@
 library(shiny)
 library(bslib)
 library(dplyr)
+library(DT)
 
 # data layer
 
@@ -25,7 +26,7 @@ ui <- page_sidebar(
         selectInput("selected_state", "Select State or Territory", state_list)
     ),
     # Output: Histogram ----
-    verbatimTextOutput("text")
+    DT::dataTableOutput("table")
 )
 
 
@@ -35,8 +36,8 @@ server <- function(input, output) {
         data |> filter(state_territory == input$selected_state)
     })
 
-    output$text <- renderPrint({
-        print(selected_data())
+    output$table <- DT::renderDataTable({
+        selected_data()
     })
 }
 
