@@ -1,57 +1,60 @@
 library(shiny)
 library(bslib)
+library(dplyr)
 
 # data layer
 
-data <- nanoparquet::read_parquet(fs::path_wd(
-    "data",
-    "state-sha-ship",
-    ext = "parquet"
-))
+data <-
+    nanoparquet::read_parquet(
+        fs::path_wd(
+            "state-sha-ship",
+            ext = "parquet"
+        )
+    )
+
+my_selection <- unique(data$state_territory)
 
 # Define UI for app that draws a histogram ----
 ui <- page_sidebar(
     # App title ----
-    title = "Hello Shiny!",
+    title = "Other State's SHAs and SHIPs",
+    headerPanel("State/Territory Selector"),
     # Sidebar panel for inputs ----
     sidebar = sidebar(
-        # Input: Slider for the number of bins ----
-        sliderInput(
-            inputId = "bins",
-            label = "Number of bins:",
-            min = 1,
-            max = 50,
-            value = 30
-        )
+        # select state or other
+        selectInput("selected_state", "Select State or Territory", my_selection)
     ),
     # Output: Histogram ----
-    plotOutput(outputId = "distPlot")
+    textOutput("text")
 )
 
 
 # Define server logic required to draw a histogram ----
 server <- function(input, output) {
-    # Histogram of the Old Faithful Geyser Data ----
-    # with requested number of bins
-    # This expression that generates a histogram is wrapped in a call
-    # to renderPlot to indicate that:
-    #
+    selected_data <- reactive({
+        data |> filter(state_territory == input$selected_state)
+    })
+
+    output$text <- renderText({
+        print(selected_data())
+    })
+
     # 1. It is "reactive" and therefore should be automatically
     #    re-executed when inputs (input$bins) change
     # 2. Its output type is a plot
-    output$distPlot <- renderPlot({
-        x <- faithful$waiting
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
+    # output$distPlot <- renderPlot({
+    #     x <- faithful$waiting
+    #     bins <- seq(min(x), max(x), length.out = input$bins + 1)
 
-        hist(
-            x,
-            breaks = bins,
-            col = "#007bc2",
-            border = "white",
-            xlab = "Waiting time to next eruption (in mins)",
-            main = "Histogram of waiting times"
-        )
-    })
+    #     hist(
+    #         x,
+    #         breaks = bins,
+    #         col = "#007bc2",
+    #         border = "white",
+    #         xlab = "Waiting time to next eruption (in mins)",
+    #         main = "Histogram of waiting times"
+    #     )
+    # })
 }
 
 
