@@ -12,7 +12,7 @@ data <-
         )
     )
 
-my_selection <- unique(data$state_territory)
+state_list <- unique(data$state_territory)
 
 # Define UI for app that draws a histogram ----
 ui <- page_sidebar(
@@ -22,10 +22,10 @@ ui <- page_sidebar(
     # Sidebar panel for inputs ----
     sidebar = sidebar(
         # select state or other
-        selectInput("selected_state", "Select State or Territory", my_selection)
+        selectInput("selected_state", "Select State or Territory", state_list)
     ),
     # Output: Histogram ----
-    textOutput("text")
+    verbatimTextOutput("text")
 )
 
 
@@ -35,26 +35,9 @@ server <- function(input, output) {
         data |> filter(state_territory == input$selected_state)
     })
 
-    output$text <- renderText({
+    output$text <- renderPrint({
         print(selected_data())
     })
-
-    # 1. It is "reactive" and therefore should be automatically
-    #    re-executed when inputs (input$bins) change
-    # 2. Its output type is a plot
-    # output$distPlot <- renderPlot({
-    #     x <- faithful$waiting
-    #     bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-    #     hist(
-    #         x,
-    #         breaks = bins,
-    #         col = "#007bc2",
-    #         border = "white",
-    #         xlab = "Waiting time to next eruption (in mins)",
-    #         main = "Histogram of waiting times"
-    #     )
-    # })
 }
 
 
