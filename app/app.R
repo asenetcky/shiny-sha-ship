@@ -1,31 +1,95 @@
 library(shiny)
+library(shinyWidgets)
 library(bslib)
 library(dplyr)
 library(DT)
 
 # data layer
-
 data <-
     nanoparquet::read_parquet(
         fs::path_wd(
+            #"app",
             "state-sha-ship",
             ext = "parquet"
         )
+    ) |>
+    mutate(
+        across(
+            c(
+                state_territory,
+                content_type,
+                content_platform,
+                content_presentation_layer
+            ),
+            .fns = \(col) as.factor(col)
+        ),
+        link_landing_page = if_else(
+            link_landing_page != "unknown",
+            glue::glue(
+                "<a href='{link_landing_page}'>{link_landing_page}</a>"
+            ),
+            link_landing_page
+        ),
+        link_item = if_else(
+            link_item != "unknown",
+            glue::glue(
+                "<a href='{link_item}'>{link_item}</a>"
+            ),
+            link_item
+        )
     )
 
-state_list <- unique(data$state_territory)
+# user selection
+state_list <- levels(data$state_territory)
 
-# Define UI for app that draws a histogram ----
+content_type_list <- levels(data$content_type)
+
+content_platform_list <- levels(data$content_platform)
+
+# ui that filters a DT table
 ui <- page_sidebar(
     # App title ----
     title = "Other State's SHAs and SHIPs",
-    headerPanel("State/Territory Selector"),
     # Sidebar panel for inputs ----
     sidebar = sidebar(
+        width = 500,
         # select state or other
-        selectInput("selected_state", "Select State or Territory", state_list)
+        pickerInput(
+            inputId = "selected_state",
+            label = "Select State or Territory",
+            choices = state_list,
+            options = pickerOptions(
+                actionsBox = TRUE,
+                size = 5,
+                selectedTextFormat = "count > 3"
+            ),
+            multiple = TRUE,
+            selected = "massachusetts"
+        ),
+        pickerInput(
+            inputId = "selected_content_type",
+            label = "select content type",
+            choices = content_type_list,
+            options = pickerOptions(
+                actionsBox = TRUE,
+                size = 5
+            ),
+            multiple = TRUE,
+            selected = content_type_list
+        ),
+        pickerInput(
+            inputId = "selected_content_platform",
+            label = "select platform type",
+            choices = content_platform_list,
+            options = pickerOptions(
+                actionsBox = TRUE,
+                size = 5
+            ),
+            multiple = TRUE,
+            selected = content_platform_list
+        )
     ),
-    # Output: Histogram ----
+    # Output: DT Table ----
     DT::dataTableOutput("table")
 )
 
@@ -33,11 +97,21 @@ ui <- page_sidebar(
 # Define server logic required to draw a histogram ----
 server <- function(input, output) {
     selected_data <- reactive({
-        data |> filter(state_territory == input$selected_state)
+        data |>
+            filter(
+                state_territory %in%
+                    input$selected_state &
+                    (content_type %in%
+                        input$selected_content_type |
+                        content_platform %in% input$selected_content_platform)
+                #&
+                #content_type %in% input$selected_content_type &
+                # content_platform %in% input$selected_content_platform
+            )
     })
 
     output$table <- DT::renderDataTable({
-        selected_data()
+        DT::datatable(selected_data(), escape = FALSE)
     })
 }
 
