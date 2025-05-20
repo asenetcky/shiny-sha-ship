@@ -1,9 +1,3 @@
-library(shiny)
-library(shinyWidgets)
-library(bslib)
-library(dplyr)
-library(DT)
-
 # data layer
 data <-
     nanoparquet::read_parquet(
@@ -11,31 +5,6 @@ data <-
             #"app",
             "state-sha-ship",
             ext = "parquet"
-        )
-    ) |>
-    mutate(
-        across(
-            c(
-                state_territory,
-                content_type,
-                content_platform,
-                content_presentation_layer
-            ),
-            .fns = \(col) as.factor(col)
-        ),
-        link_landing_page = if_else(
-            link_landing_page != "unknown",
-            glue::glue(
-                "<a href='{link_landing_page}'>{link_landing_page}</a>"
-            ),
-            link_landing_page
-        ),
-        link_item = if_else(
-            link_item != "unknown",
-            glue::glue(
-                "<a href='{link_item}'>{link_item}</a>"
-            ),
-            link_item
         )
     )
 
